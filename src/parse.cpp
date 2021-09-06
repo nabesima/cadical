@@ -168,7 +168,7 @@ const char * Parser::parse_dimacs_non_profiled (int & vars, int strict) {
       if (strict != FORCED)
         solver->reserve (vars);
     }
-  else if (!parse_inccnf_too)
+  else if (!parse_inccnf_too)  // parse_inccnf_too != NULL 
     PER ("expected 'c' after 'p '");
   else if (ch == 'i')
     {
@@ -218,7 +218,7 @@ const char * Parser::parse_dimacs_non_profiled (int & vars, int strict) {
         if (ch == EOF)
           PER ("unexpected end-of-file in comment");
     }
-    solver->add (lit);
+    solver->add (lit);  // terminator である 0 を登録すると，内部で節を登録してくれる（気持ち悪い）
     if (!found_inccnf_header &&
         !lit && parsed++ >= clauses && strict != FORCED)
       PER ("too many clauses");
@@ -262,7 +262,7 @@ const char * Parser::parse_dimacs_non_profiled (int & vars, int strict) {
             PER ("unexpected end-of-file in comment");
       }
       if (cubes)
-        cubes->push_back (lit);
+        cubes->push_back (lit);   // cube と cube の区切りはどうするの？ 未実装？
       if (!lit) {
         num_cubes++;
         for (;;)

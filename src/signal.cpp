@@ -112,6 +112,12 @@ void Signal::set (Handler * h) {
 #define SIGNAL(SIG) \
   SIG ## _handler = signal (SIG, catch_signal);
 SIGNALS
+// SIGNAL(SIGABRT), SIGNAL(SIGINT), SIGNAL(SIGSEGV), SIGNAL(SIGTERM) に等しい
+// よって以下のように展開される：
+// SIGNAL(SIGABRT) => SIGABRT_handler = signal(SIGABRT, catch_signal);
+// SIGNAL(SIGINT ) => SIGINT_handler  = signal(SIGINT , catch_signal);
+// SIGNAL(SIGSEGV) => SIGSEGV_handler = signal(SIGSEGV, catch_signal);
+// SIGNAL(SIGTERM) => SIGTERM_handler = signal(SIGTERM, catch_signal);
 #undef SIGNAL
 }
 

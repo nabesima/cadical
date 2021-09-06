@@ -331,7 +331,7 @@ int App::main (int argc, char ** argv) {
 
   // Now initialize solver.
 
-  init ();
+  init ();  // ソルバーの初期化 & シグナルハンドラの登録
 
   // Set all argument option values to not used yet.
 

@@ -85,7 +85,7 @@ void Internal::enlarge_vals (size_t new_vsize) {
   new_vals = new signed char [ bytes ]; // g++-4.8 does not like ... { 0 };
   memset (new_vals, 0, bytes);
   ignore_clang_analyze_memory_leak_warning = new_vals;
-  new_vals += new_vsize;
+  new_vals += new_vsize;  // 配列の真ん中を指す
 
   if (vals) memcpy (new_vals - max_var, vals - max_var, 2u*max_var + 1u);
   vals -= vsize;
@@ -175,7 +175,7 @@ void Internal::add_original_lit (int lit) {
     original.push_back (lit);
   } else {
     if (proof) proof->add_original_clause (original);
-    add_new_original_clause ();
+    add_new_original_clause (); // lit == 0 のとき節として登録
     original.clear ();
   }
 }

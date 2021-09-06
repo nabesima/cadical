@@ -357,9 +357,9 @@ void Internal::add_new_original_clause () {
         unsat = true;
       }
     } else if (size == 1) {
-      assign_original_unit (clause[0]);
+      assign_original_unit (clause[0]); // 単位節の登録
     } else {
-      Clause * c = new_clause (false);
+      Clause * c = new_clause (false);  // 長さ2以上の節の登録
       watch_clause (c);
     }
     if (original.size () > size) {

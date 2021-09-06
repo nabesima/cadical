@@ -53,7 +53,7 @@ void External::init (int new_max_var) {
   unsigned iidx = old_internal_max_var + 1, eidx;
   for (eidx = max_var + 1u;
        eidx <= (unsigned) new_max_var;
-       eidx++, iidx++) {
+       eidx++, iidx++) {  // 結局 eidx == iidx となり，内部と外部の変数番号が同じになる気がする
     LOG ("mapping external %u to internal %u", eidx, iidx);
     assert (e2i.size () == eidx);
     e2i.push_back (iidx);

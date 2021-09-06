@@ -153,7 +153,7 @@ struct Internal {
   int max_var;                  // internal maximum variable index
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
-  signed char * vals;           // assignment [-max_var,max_var]
+  signed char * vals;           // assignment [-max_var,max_var] （負の添字を許している）
   vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'

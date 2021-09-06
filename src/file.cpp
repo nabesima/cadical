@@ -32,7 +32,7 @@ File::File (Internal *i, bool w, int c, FILE * f, const char * n)
   close_file (c), file (f),
   _name (n), _lineno (1), _bytes (0)
 {
-  (void) i, (void) w;
+  (void) i, (void) w;   // suppress "unused" warning
   assert (f), assert (n);
 }
 
