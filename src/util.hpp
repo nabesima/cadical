@@ -13,7 +13,7 @@ using namespace std;
 
 inline double relative (double a, double b) { return b ? a / b : 0; }
 inline double percent (double a, double b) { return relative (100 * a, b); }
-inline int sign (int lit) { return (lit > 0) - (lit < 0); }   // lit = 0 のとき sign は 0 を返す．それ以外のとき，分岐処理無しで  1 or -1 を返す
+inline int sign (int lit) { return (lit > 0) - (lit < 0); }   // lit = 0 のとき sign は 0 を返す．それ以外のとき，分岐処理無しで  1 (正) or -1(負) を返す
 inline unsigned bign (int lit) { return 1 + (lit < 0); }
 
 /*------------------------------------------------------------------------*/

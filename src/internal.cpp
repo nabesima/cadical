@@ -446,9 +446,9 @@ bool Internal::preprocess_round (int round) {
     "starting round %d with %" PRId64 " variables and %" PRId64 " clauses",
     round, before.vars, before.clauses);
   int old_elimbound = lim.elimbound;
-  if (opts.probe) probe (false);
-  if (opts.elim) elim (false);
-  if (opts.condition) condition (false);
+  if (opts.probe) probe (false);          // 簡単化技術１
+  if (opts.elim) elim (false);            // 簡単化技術２
+  if (opts.condition) condition (false);  // 簡単化技術３
   after.vars = active ();
   after.clauses = stats.current.irredundant;
   assert (preprocessing);
@@ -582,16 +582,16 @@ int Internal::solve (bool preprocess_only) {
   else LOG ("internal solving in full mode");
   init_report_limits ();
   int res = already_solved ();
-  if (!res) res = restore_clauses ();
+  if (!res) res = restore_clauses ();  // 保留
   if (!res) {
     init_preprocessing_limits ();
     if (!preprocess_only) init_search_limits ();
   }
   if (!res) res = preprocess ();
   if (!preprocess_only) {
-    if (!res) res = local_search ();
-    if (!res) res = lucky_phases ();
-    if (!res) res = cdcl_loop_with_inprocessing ();
+    if (!res) res = local_search ();                // 局所探索 (walksat)
+    if (!res) res = lucky_phases ();                // ラッキーフェーズ
+    if (!res) res = cdcl_loop_with_inprocessing (); // CDCL
   }
   reset_solving ();
   report_solving (res);

@@ -63,7 +63,7 @@ void Internal::mark_added (Clause * c) {
   LOG (c, "marking added");
   assert (likely_to_be_kept_clause (c));
   for (const auto & lit : *c)
-    mark_added (lit, c->size, c->redundant);
+    mark_added (lit, c->size, c->redundant);    // 節をマークするのではなく，節内のリテラルをマークする
 }
 
 /*------------------------------------------------------------------------*/
@@ -84,7 +84,7 @@ Clause * Internal::new_clause (bool red, int glue) {
   else keep = false;
 
   size_t bytes = Clause::bytes (size);
-  Clause * c = (Clause *) new char[bytes];
+  Clause * c = (Clause *) new char[bytes];    // OS のメモリ管理にまかせる
 
   stats.added.total++;
 #ifdef LOGGING
@@ -308,7 +308,7 @@ void Internal::assign_original_unit (int lit) {
   mark_fixed (lit);
   if (propagate ()) return;
   LOG ("propagation of original unit results in conflict");
-  learn_empty_clause ();
+  learn_empty_clause ();  // DLV 0 で矛盾が生じたので空節を学習
 }
 
 // New clause added through the API, e.g., while parsing a DIMACS file.

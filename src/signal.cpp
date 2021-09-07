@@ -41,6 +41,14 @@ SIGNAL(SIGTERM) \
 #define SIGNAL(SIG) \
 static void (*SIG ## _handler)(int);
 SIGNALS
+// SIGNAL(SIGABRT), SIGNAL(SIGINT), SIGNAL(SIGSEGV), SIGNAL(SIGTERM) に等しい
+// よって以下のように展開される：
+// SIGNAL(SIGABRT) => static void (*SIGABRT_hander)(int);
+// SIGNAL(SIGINT ) => static void (*SIGINT_hander)(int);
+// SIGNAL(SIGSEGV) => static void (*SIGSEGV_hander)(int);
+// SIGNAL(SIGTERM) => static void (*SIGTERM_hander)(int);
+// これらは static だが，大域変数なので，複数の CaDiCaL オブジェクトを保持したときにハンドラはどうなる？
+// → App の catch_signal メソッドがハンドラなので問題ない？
 #undef SIGNAL
 static void (*SIGALRM_handler)(int);
 
