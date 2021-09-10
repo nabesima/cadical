@@ -209,7 +209,7 @@ inline void Internal::bump_clause (Clause * c) {
   if (!c->redundant) return;
   int new_glue = recompute_glue (c);
   if (new_glue < c->glue) promote_clause (c, new_glue);
-  else if (used && c->glue <= opts.reducetier2glue) c->used = 2;
+  else if (used && c->glue <= opts.reducetier2glue) c->used = 2;  // 使われたのであれば寿命を２回（学習節の reduction を２回生き延びる）にする
 }
 
 /*------------------------------------------------------------------------*/
@@ -231,21 +231,21 @@ Internal::analyze_literal (int lit, int & open) {
   if (!v.level) return;
   assert (val (lit) < 0);
   assert (v.level <= level);
-  if (v.level < level) clause.push_back (lit);
-  Level & l = control[v.level];
-  if (!l.seen.count++) {
+  if (v.level < level) clause.push_back (lit);  // ●なら学習節の一部になる
+  Level & l = control[v.level];                 // DLV v.level の decision literal と trail 上の開始 index 
+  if (!l.seen.count++) {                        // はじめて DLV l.level の変数を見たならば
     LOG ("found new level %d contributing to conflict", v.level);
-    levels.push_back (v.level);
+    levels.push_back (v.level);                 // 矛盾の導出に関係したレベルを記録（重複して保存されることはない）
   }
-  if (v.trail < l.seen.trail) l.seen.trail = v.trail;
+  if (v.trail < l.seen.trail) l.seen.trail = v.trail;   // DLV l.level におけるチェックした変数の trail 上の最小 index
   f.seen = true;
-  analyzed.push_back (lit);
+  analyzed.push_back (lit);                     // 解析済みリテラルとして保存
   LOG ("analyzed literal %d assigned at level %d", lit, v.level);
-  if (v.level == level) open++;
+  if (v.level == level) open++;                 // ○なら open++
 }
 
 inline void
-Internal::analyze_reason (int lit, Clause * reason, int & open) {
+Internal::analyze_reason (int lit, Clause * reason, int & open) {   // 第１引数 lit は uip 
   assert (reason);
   bump_clause (reason);
   for (const auto & other : *reason)
@@ -422,8 +422,8 @@ inline int Internal::find_conflict_level (int & forced) {
   for (const auto & lit : *conflict) {
     const int tmp = var (lit).level;
     if (tmp > res) {
-      res = tmp;
-      forced = lit;
+      res = tmp;        // 矛盾節中の最大 lv がいずれはいる
+      forced = lit;     // 最大 lv のリテラル
       count = 1;
     } else if (tmp == res) {
       count++;
@@ -479,7 +479,7 @@ inline int Internal::find_conflict_level (int & forced) {
   //
   if (count != 1) forced = 0;
 
-  return res;
+  return res;   // 矛盾節中の最大レベル
 }
 
 /*------------------------------------------------------------------------*/
@@ -495,16 +495,16 @@ inline int Internal::determine_actual_backtrack_level (int jump) {
     LOG ("chronological backtracking disabled using jump level %d", res);
   } else if (opts.chronoalways) {
     stats.chrono++;
-    res = level - 1;
+    res = level - 1;    // 現在のレベル - 1
     LOG ("forced chronological backtracking to level %d", res);
-  } else if (jump >= level - 1) {
+  } else if (jump >= level - 1) {   // なぜ >= ?? == でよくない？？
     res = jump;
     LOG ("jump level identical to chronological backtrack level %d", res);
   } else if ((size_t) jump < assumptions.size ()) {
     res = jump;
     LOG ("using jump level %d since it is lower than assumption level %zd",
       res, assumptions.size ());
-  } else if (level - jump > opts.chronolevelim) {
+  } else if (level - jump > opts.chronolevelim) {   // 大きく戻りすぎるときは chronological に戻ることにする
     stats.chrono++;
     res = level - 1;
     LOG ("back-jumping over %d > %d levels prohibited"
@@ -514,6 +514,7 @@ inline int Internal::determine_actual_backtrack_level (int jump) {
 
     int best_idx = 0, best_pos = 0;
 
+    //  trail の再利用をするためのコード；保留
     if (use_scores ()) {
       for (size_t i = control[jump + 1].trail; i < trail.size (); i++) {
         const int idx = abs (trail[i]);
@@ -612,8 +613,8 @@ void Internal::analyze () {
 
   // First update moving averages of trail height at conflict.
   //
-  UPDATE_AVERAGE (averages.current.trail.fast, trail.size ());
-  UPDATE_AVERAGE (averages.current.trail.slow, trail.size ());
+  UPDATE_AVERAGE (averages.current.trail.fast, trail.size ());  // 使ってなさそう．保留
+  UPDATE_AVERAGE (averages.current.trail.slow, trail.size ());  // report のみに使用？ 保留
 
   /*----------------------------------------------------------------------*/
 
@@ -700,15 +701,16 @@ void Internal::analyze () {
   int uip = 0;                  // The first UIP literal.
 
   for (;;) {
-    analyze_reason (uip, reason, open);
+    analyze_reason (uip, reason, open); // ○の数をカウントし，●を clause に保存
     uip = 0;
     while (!uip) {
       assert (i > 0);
       const int lit = trail[--i];
-      if (!flags (lit).seen) continue;
-      if (var (lit).level == level) uip = lit;
+      if (!flags (lit).seen) continue;    // 矛盾導出に関係のない伝播を skip
+      if (var (lit).level == level) uip = lit;  // ○なら uip （候補）として保存
     }
-    if (!--open) break;
+    // ここに来たときには，seen フラグのたった○を見つけたとき
+    if (!--open) break;   // この直前で open == 1 なら UIP を見つけたことになるので break
     reason = var (uip).reason;
     LOG (reason, "analyzing %d reason", uip);
   }
@@ -718,7 +720,7 @@ void Internal::analyze () {
   // Update glue and learned (1st UIP literals) statistics.
   //
   int size = (int) clause.size ();
-  const int glue = (int) levels.size () - 1;
+  const int glue = (int) levels.size () - 1;    // LBD の算出
   LOG (clause, "1st UIP size %d and glue %d clause", size, glue);
   UPDATE_AVERAGE (averages.current.glue.fast, glue);
   UPDATE_AVERAGE (averages.current.glue.slow, glue);
@@ -757,7 +759,7 @@ void Internal::analyze () {
   // flipped 1st UIP literal.
   //
   int jump;
-  Clause * driving_clause = new_driving_clause (glue, jump);
+  Clause * driving_clause = new_driving_clause (glue, jump);    // jump がバックトラック先（driving_clause が単位節になる）のレベル
   UPDATE_AVERAGE (averages.current.jump, jump);
 
   int new_level = determine_actual_backtrack_level (jump);;
@@ -767,7 +769,7 @@ void Internal::analyze () {
   if (uip) search_assign_driving (-uip, driving_clause);
   else learn_empty_clause ();
 
-  if (stable) reluctant.tick (); // Reluctant has its own 'conflict' counter.
+  if (stable) reluctant.tick (); // Reluctant has its own 'conflict' counter. // stable モードで luby リスタートを判定するカウンタを更新
 
   // Clean up.
   //

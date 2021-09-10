@@ -57,7 +57,7 @@ int Internal::trivially_false_satisfiable () {
     return unlucky (0);
   }
   stats.lucky.constant.zero++;
-  return 10;
+  return 10;  // SAT
 }
 
 int Internal::trivially_true_satisfiable () {
@@ -285,14 +285,14 @@ int Internal::lucky_phases () {
   assert (!searching_lucky_phases);
   searching_lucky_phases = true;
   stats.lucky.tried++;
-  int res       = trivially_false_satisfiable ();
-  if (!res) res = trivially_true_satisfiable ();
-  if (!res) res = forward_true_satisfiable ();
-  if (!res) res = forward_false_satisfiable ();
-  if (!res) res = backward_false_satisfiable ();
-  if (!res) res = backward_true_satisfiable ();
-  if (!res) res = positive_horn_satisfiable ();
-  if (!res) res = negative_horn_satisfiable ();
+  int res       = trivially_false_satisfiable ();  // 各節に negative literal があるとき，すべてのリテラルに偽を割り当てて（単位伝播を除く）充足できるか？
+  if (!res) res = trivially_true_satisfiable ();   // 各節に positive literal があるとき，すべてのリテラルに真を割り当てて（単位伝播を除く）充足できるか？
+  if (!res) res = forward_true_satisfiable ();     // すべてのリテラルに真を割り当てて（単位伝播を除く）充足できるか？(変数1から昇順に調べる)
+  if (!res) res = forward_false_satisfiable ();    // すべてのリテラルに偽を割り当てて（単位伝播を除く）充足できるか？(変数1から昇順に調べる)
+  if (!res) res = backward_false_satisfiable ();   // すべてのリテラルに真を割り当てて（単位伝播を除く）充足できるか？(変数1から降順に調べる)
+  if (!res) res = backward_true_satisfiable ();    // すべてのリテラルに偽を割り当てて（単位伝播を除く）充足できるか？(変数1から降順に調べる)
+  if (!res) res = positive_horn_satisfiable ();    // 各節中の最初に見つけた正リテラルを真とする．残りの未割り当ての変数は偽とする(trivially_true_satisfiable と同じでは？)  
+  if (!res) res = negative_horn_satisfiable ();    // 各節中の最初に見つけた負リテラルを真とする．残りの未割り当ての変数は真とする(trivially_false_satisfiable と同じでは？)  
   if (res < 0) assert (termination_forced), res = 0;
   if (res == 10) stats.lucky.succeeded++;
   report ('l', !res);

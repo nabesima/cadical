@@ -52,7 +52,7 @@ inline void Internal::search_assign (int lit, Clause * reason) {
 
   const int idx = vidx (lit);
   assert (!vals[idx]);
-  assert (!flags (idx).eliminated () || reason == decision_reason);
+  assert (!flags (idx).eliminated () || reason == decision_reason); // 保留
   Var & v = var (idx);
   int lit_level;
 
@@ -61,7 +61,7 @@ inline void Internal::search_assign (int lit, Clause * reason) {
   //
   if (!reason) lit_level = 0;   // unit
   else if (reason == decision_reason) lit_level = level, reason = 0;
-  else if (opts.chrono) lit_level = assignment_level (lit, reason);
+  else if (opts.chrono) lit_level = assignment_level (lit, reason);   // chronological backtracking の場合，lit のレベルは，reason 中の最大レベルとする
   else lit_level = level;
   if (!lit_level) reason = 0;
 
@@ -86,7 +86,7 @@ inline void Internal::search_assign (int lit, Clause * reason) {
     const Watches & ws = watches (-lit);
     if (!ws.empty ()) {
       const Watch & w = ws[0];
-      __builtin_prefetch (&w, 0, 1);
+      __builtin_prefetch (&w, 0, 1);    // あらかじめキャッシュに w をロードしておき，キャッシュミスを抑制する
     }
   }
 }
@@ -107,11 +107,11 @@ void Internal::assign_unit (int lit) {
 // Just assume the given literal as decision (increase decision level and
 // assign it).  This is used below in 'decide'.
 
-void Internal::search_assume_decision (int lit) {
+void Internal::search_assume_decision (int lit) {   // CDCL における decision 
   require_mode (SEARCH);
   assert (propagated == trail.size ());
-  level++;
-  control.push_back (Level (lit, trail.size ()));
+  level++;  // decision level を増やす
+  control.push_back (Level (lit, trail.size ())); // decision literal 'lit' と，この decision level における trail の開始インデックス
   LOG ("search decide %d", lit);
   search_assign (lit, decision_reason);
 }
@@ -154,9 +154,9 @@ bool Internal::propagate () {
 
   while (!conflict && propagated != trail.size ()) {
 
-    const int lit = -trail[propagated++];
+    const int lit = -trail[propagated++];   // lit は false
     LOG ("propagating %d", -lit);
-    Watches & ws = watches (lit);
+    Watches & ws = watches (lit);           // lit を監視中の節リスト
 
     const const_watch_iterator eow = ws.end ();
     watch_iterator j = ws.begin ();
@@ -197,7 +197,7 @@ bool Internal::propagate () {
         // there also only to simplify the code).
 
         if (b < 0) conflict = w.clause;          // but continue ...
-        else search_assign (w.blit, w.clause);
+        else search_assign (w.blit, w.clause);   // w.clause が単位節なので，他方のリテラル w.blit を伝播
 
       } else {
 
@@ -208,7 +208,7 @@ bool Internal::propagate () {
         // the solver.  Note, that this check is positive very rarely and
         // thus branch prediction should be almost perfect here.
 
-        if (w.clause->garbage) { j--; continue; }
+        if (w.clause->garbage) { j--; continue; }   // 監視リストからも除去
 
         literal_iterator lits = w.clause->begin ();
 
@@ -221,10 +221,10 @@ bool Internal::propagate () {
         //
         // which achieves the same effect, but needs a branch.
         //
-        const int other = lits[0] ^ lits[1] ^ lit;
+        const int other = lits[0] ^ lits[1] ^ lit;    // 同じ値の xor は 0 になるので，other の値が残る
         const signed char u = val (other); // value of the other watch
 
-        if (u > 0) j[-1].blit = other; // satisfied, just replace blit
+        if (u > 0) j[-1].blit = other; // satisfied, just replace blit  // いま other が true なので今後も true と期待して blocking literal として保存
         else {
 
           // This follows Ian Gent's (JAIR'13) idea of saving the position
@@ -264,7 +264,7 @@ bool Internal::propagate () {
 
             // Replacement satisfied, so just replace 'blit'.
 
-            j[-1].blit = r;
+            j[-1].blit = r;   // いま r (=k) が true なので今後も true と期待して blocking literal として保存
 
           } else if (!v) {
 
@@ -273,10 +273,10 @@ bool Internal::propagate () {
             LOG (w.clause, "unwatch %d in", lit);
 
             lits[0] = other;
-            lits[1] = r;
-            *k = lit;
+            lits[1] = r;      // r と lit を swap
+            *k = lit;         
 
-            watch_literal (r, lit, w.clause);
+            watch_literal (r, lit, w.clause);   // -r の監視リテラルリストに移動
 
             j--;  // Drop this watch from the watch list of 'lit'.
 

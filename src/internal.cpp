@@ -196,10 +196,10 @@ int Internal::cdcl_loop_with_inprocessing () {
   while (!res) {
          if (unsat) res = 20;
     else if (!propagate ()) analyze ();      // propagate and analyze
-    else if (iterating) iterate ();          // report learned unit
+    else if (iterating) iterate ();          // report learned unit (単位節を学習し，次回ループの単位伝播後に場合に報告)
     else if (satisfied ()) res = 10;         // found model
     else if (search_limits_hit ()) break;    // decision or conflict limit
-    else if (terminated_asynchronously ())    // externally terminated
+    else if (terminated_asynchronously ())    // externally terminated (割り込み時にどうして停止するかは保留)
       break;
     else if (restarting ()) restart ();      // restart by backtracking
     else if (rephasing ()) rephase ();       // reset variable phases

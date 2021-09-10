@@ -100,7 +100,7 @@ void Internal::mark_useless_redundant_clauses_as_garbage () {
 
   stable_sort (stack.begin (), stack.end (), reduce_less_useful ());
 
-  size_t target = 1e-2 * opts.reducetarget * stack.size ();
+  size_t target = 1e-2 * opts.reducetarget * stack.size ();   // reducetarget = 75(%)
 
   // This is defensive code, which I usually consider a bug, but here I am
   // just not sure that using floating points in the line above is precise
@@ -112,7 +112,7 @@ void Internal::mark_useless_redundant_clauses_as_garbage () {
     target, percent (target, stats.current.redundant));
 
   auto i = stack.begin ();
-  const auto t = i + target;
+  const auto t = i + target;    // 75%もの節を廃棄（minisat, glucose は学習節の半分を廃棄していたが，used や keep を除いていない））
   while (i != t) {
     Clause * c = *i++;
     LOG (c, "marking useless to be collected");

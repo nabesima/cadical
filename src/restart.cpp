@@ -27,8 +27,8 @@ bool Internal::stabilizing () {
     PHASE ("stabilizing", stats.stabphases,
       "reached stabilization limit %" PRId64 " after %" PRId64 " conflicts",
       lim.stabilize, stats.conflicts);
-    inc.stabilize *= opts.stabilizefactor*1e-2;
-    if (inc.stabilize > opts.stabilizemaxint)
+    inc.stabilize *= opts.stabilizefactor*1e-2;   // stable モードの時間（矛盾回数）は指数関数的に増加
+    if (inc.stabilize > opts.stabilizemaxint)     // ただし最大値(20億)がある
       inc.stabilize = opts.stabilizemaxint;
     lim.stabilize = stats.conflicts + inc.stabilize;
     if (lim.stabilize <= stats.conflicts)
@@ -54,13 +54,13 @@ bool Internal::stabilizing () {
 bool Internal::restarting () {
   if (!opts.restart) return false;
   if ((size_t) level < assumptions.size () + 2) return false;
-  if (stabilizing ()) return reluctant;
-  if (stats.conflicts <= lim.restart) return false;
-  double f = averages.current.glue.fast;
-  double margin = (100.0 + opts.restartmargin)/100.0;
-  double s = averages.current.glue.slow, l = margin * s;
+  if (stabilizing ()) return reluctant; // stable モードに入ったならば，Luby リスタート戦略でリスタート判定
+  if (stats.conflicts <= lim.restart) return false;   // lim.restart のデフォルトは 2 (+ conflicts)
+  double f = averages.current.glue.fast;                  // f = おそらく短期的な（最近の） LBD の平均値
+  double margin = (100.0 + opts.restartmargin)/100.0;     // restartmargin はデフォルト 10 (%)
+  double s = averages.current.glue.slow, l = margin * s;  // s = 長期的 LBD の平均値, l = s * 1.1
   LOG ("EMA glue slow %.2f fast %.2f limit %.2f", s, f, l);
-  return l <= f;
+  return l <= f;    // 最近の LBD が長期的 LBD * 1.1 より悪化するとリスタート
 }
 
 // This is Marijn's reuse trail idea.  Instead of always backtracking to the
@@ -97,7 +97,7 @@ void Internal::restart () {
   stats.restartlevels += level;
   if (stable) stats.restartstable++;
   LOG ("restart %" PRId64 "", stats.restarts);
-  backtrack (reuse_trail ());
+  backtrack (reuse_trail ());   // trail の再利用
 
   lim.restart = stats.conflicts + opts.restartint;
   LOG ("new restart limit at %" PRId64 " conflicts", lim.restart);
